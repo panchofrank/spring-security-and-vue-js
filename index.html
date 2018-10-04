@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>A Secure Vue.js Application</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+</head>
+<body>
+<div id="app">
+    <div class="container">
+        <ul class="nav nav-pills">
+            <li><a v-on:click="logout()">Logout</a></li>
+        </ul>
+    </div>
+    <div class="container">
+    <span v-if="authenticated">
+		<div class="container">
+            <h3>Secure content</h3>
+        </div>
+	</span>
+        <span v-if="!authenticated">
+
+
+	        <div class="form-group">
+		        <label for="username">Username:</label>
+                <input type="text" class="form-control" id="username" name="username" v-model="username"/>
+	        </div>
+	        <div class="form-group">
+		        <label for="password">Password:</label>
+                <input type="password" class="form-control" id="password" name="password" v-model="password"/>
+	        </div>
+	        <button v-on:click="login()" class="btn btn-primary">Submit</button>
+
+    </span>
+
+    </div>
+</div>
+
+
+<script>
+    var app = new Vue({
+        el: '#app',
+        data: {
+            username: '',
+            password: '',
+            authenticated: false
+        },
+        methods: {
+            login: function() {
+                this.authenticate(app);
+            },
+
+            authenticate: function (credentials) {
+
+                var headers = {};
+                headers['X-Requested-With'] = 'XMLHttpRequest';  // Need this to repress browser login on 401
+
+                if (credentials) {
+                    headers.Authorization = 'Basic ' + btoa(credentials.username + ':' + credentials.password);
+                }
+                axios.get('user', {headers : headers}).then(response => {
+                    var user = response.data;
+                if (user.name) {
+                    app.authenticated = true;
+                } else {
+                    app.authenticated = false;
+                }
+
+            }).catch(e => {
+                    console.log('Unable to login: ' + e);
+
+            })
+
+            },
+
+            logout: function() {
+
+                axios.post('logout', {}).then(response => {
+                    app.authenticated = false;
+
+                // TODO navigate to login
+            }).catch(e => {
+                    console.log('Unable to logout: ' + e);
+                    app.authenticated = false;
+            })
+
+            }
+        }
+    });
+    app.authenticate(undefined);
+</script>
+</body>
+</html>
